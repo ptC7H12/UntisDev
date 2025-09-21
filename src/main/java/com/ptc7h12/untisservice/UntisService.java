@@ -4,6 +4,7 @@ import org.bytedream.untis4j.Session;
 import org.bytedream.untis4j.LoginException;
 import java.io.IOException;
 import java.time.LocalDate;
+import java.time.DayOfWeek;
 import java.time.format.DateTimeFormatter;
 
 import org.bytedream.untis4j.Session;
@@ -36,10 +37,14 @@ public class UntisService {
             }
 
             // Stundenplan abrufen
+            //LocalDate today = LocalDate.now();
+            //LocalDate endDate = (days != null && days > 1) ? today.plusDays(days - 1) : today;
             LocalDate today = LocalDate.now();
-            LocalDate endDate = (days != null && days > 1) ? today.plusDays(days - 1) : today;
+            LocalDate startDate = today.with(DayOfWeek.MONDAY);
+            LocalDate endDate = today.with(DayOfWeek.FRIDAY);
 
-            Map<String, Object> timetableData = getFullTimetable(session, today, endDate);
+
+            Map<String, Object> timetableData = getFullTimetable(session, startDate, endDate);
             result.put("timetable", timetableData);
 
             session.logout();
@@ -58,7 +63,56 @@ public class UntisService {
         return result;
     }
 
+
     private Map<String, Object> getFullTimetable(Session session, LocalDate start, LocalDate end) {
+        Map<String, Object> timetableData = new HashMap<>();
+
+        try {
+            // Standard: Stundenplan anhand der Klassen-ID
+            var classTimetable = session.getTimetableFromClassId(
+                    start,
+                    end,
+                    session.getInfos().getClassId()
+            );
+
+            timetableData.put("method", "class");
+            timetableData.put("count", classTimetable.size());
+            timetableData.put("period", start + " bis " + end);
+
+            List<Map<String, Object>> lessons = new ArrayList<>();
+
+            for (int i = 0; i < classTimetable.size(); i++) {
+                var lesson = classTimetable.get(i);
+                Map<String, Object> lessonMap = new HashMap<>();
+
+                lessonMap.put("date", lesson.getDate().toString());
+                lessonMap.put("startTime", lesson.getStartTime().toString());
+                lessonMap.put("endTime", lesson.getEndTime().toString());
+                lessonMap.put("subjects", lesson.getSubjects().toString());
+                lessonMap.put("rooms", lesson.getRooms().toString());
+                lessonMap.put("classes", lesson.getClasses().toString());
+
+                try {
+                    lessonMap.put("teachers", lesson.getTeachers().toString());
+                } catch (Exception e) {
+                    lessonMap.put("teachers", "Keine Berechtigung für Lehrer-Daten");
+                }
+
+                lessons.add(lessonMap);
+            }
+
+            timetableData.put("lessons", lessons);
+
+        } catch (Exception e) {
+            timetableData.put("error", "Fehler beim Abrufen des Stundenplans: " + e.getMessage());
+        }
+
+        return timetableData;
+    }
+
+
+
+    private Map<String, Object> getFullTimetableOLD(Session session, LocalDate start, LocalDate end) {
         Map<String, Object> timetableData = new HashMap<>();
 
         try {

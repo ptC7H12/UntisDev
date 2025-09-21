@@ -2,10 +2,13 @@ import org.bytedream.untis4j.Session;
 import org.bytedream.untis4j.LoginException;
 import java.io.IOException;
 import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
 
 import org.bytedream.untis4j.Session;
 import org.bytedream.untis4j.LoginException;
 import org.springframework.stereotype.Service;
+import java.util.*;
+
 
 @Service
 public class UntisService {
@@ -15,7 +18,7 @@ public class UntisService {
         try {
             // Login
             // Login (basierend auf Ihrem UntisTest Code)
-            Session session = Session.login(username, password, server, encodedSchoolName);
+            Session session = Session.login(username, password, server, schoolName);
 
             result.put("success", true);
             result.put("schoolname", session.getInfos().getSchoolName());
@@ -32,9 +35,9 @@ public class UntisService {
 
             // Stundenplan abrufen
             LocalDate today = LocalDate.now();
-            //LocalDate endDate = (days != null && days > 1) ? today.plusDays(days - 1) : today;
+            LocalDate endDate = (days != null && days > 1) ? today.plusDays(days - 1) : today;
 
-            Map<String, Object> timetableData = getFullTimetable(session, today);
+            Map<String, Object> timetableData = getFullTimetable(session, today, endDate);
             result.put("timetable", timetableData);
 
             session.logout();
@@ -53,7 +56,7 @@ public class UntisService {
         return result;
     }
 
-    private Map<String, Object> getTimetableWithFallback(Session session, LocalDate start, LocalDate end) {
+    private Map<String, Object> getFullTimetable(Session session, LocalDate start, LocalDate end) {
         Map<String, Object> timetableData = new HashMap<>();
 
         try {

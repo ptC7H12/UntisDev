@@ -1,4 +1,5 @@
-// src/main/java/UntisRequest.java (Request Model)
+package com.ptc7h12.untisservice;
+
 public class UntisRequest {
     private String username;
     private String password;

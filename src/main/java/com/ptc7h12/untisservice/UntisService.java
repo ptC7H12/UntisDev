@@ -1,3 +1,5 @@
+package com.ptc7h12.untisservice;
+
 import org.bytedream.untis4j.Session;
 import org.bytedream.untis4j.LoginException;
 import java.io.IOException;
